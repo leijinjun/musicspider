@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="cn.person.musicspider.mapper.CommentMapper">
+ 	
+ 	<resultMap type="commentsVo" id="commentsVo">
+ 		<id column="comment_id" property="commentId"/>
+ 		<result column="content" property="content"/>
+ 		<result column="replied" property="replied"/>
+ 		<result column="relation_type" property="relationType" typeHandler="cn.person.musicspider.dao.handler.EnumHandler"/>
+ 		<result column="isHot" property="isHot"/>
+ 		<result column="user_id" property="userId"/>
+ 		<result column="userPhoto" property="userPhoto"/>
+ 		<result column="comment_time" property="commentTime"/>
+ 		<result column="praise_count" property="praiseCount"/>
+ 		<result column="nickname" property="nickname"/>
+ 		<association property="song" autoMapping="true" javaType="songVo">
+ 			<id column="song_id" property="songId"/>
+ 			<result column="song_name" property="songName"/>
+ 			<result column="title" property="title"/>
+ 			<result column="lyric" property="lyric"/>
+ 		</association>
+ 	</resultMap>
+ 	
+ 	<select id="findCommentsList" resultMap="commentsVo">
+ 		SELECT
+			com.comment_id,
+			com.content,
+			com.be_replied AS 'replied',
+			com.relation_type,
+			com.is_hot_comment AS 'isHot',
+			com.user_id,
+			com.user_photoURL AS 'userPhoto',
+			com.comment_time,
+			com.praise_count,
+			com.nickname,
+			csong.song_id,
+			csong.song_name,
+			csong.title,
+			csong.lyric
+		FROM
+			cs_comment com
+		INNER JOIN cs_song csong ON com.relation_id = csong.song_id
+ 	</select>
+ 	
+ 	<select id="countByParam" resultType="long">
+ 		SELECT
+			COUNT(com.comment_id)
+		FROM
+			cs_comment com
+		INNER JOIN cs_song csong ON com.relation_id = csong.song_id
+ 	</select>
+ 	
+ 	<insert id="insertComment" parameterType="comment">
+ 		INSERT INTO `cloud_spider`.`cs_comment` (
+			`comment_id`,
+			`content`,
+			`be_replied`,
+			`relation_type`,
+			`relation_id`,
+			`is_hot_comment`,
+			`user_id`,
+			`user_photoURL`,
+			`comment_time`,
+			`praise_count`,
+			`nickname`
+		)
+		VALUES
+			(
+				#{commentId},
+				#{content},
+				#{beReplied},
+				#{relationType,typeHandler=cn.person.musicspider.dao.handler.EnumHandler},
+				#{relationId},
+				#{isHotComment,typeHandler=cn.person.musicspider.dao.handler.BooleanHandler},
+				#{userId},
+				#{userPhotoURL},
+				#{commentTime},
+				#{praiseCount},
+				#{nickname}
+			);
+ 	</insert>
+ </mapper>

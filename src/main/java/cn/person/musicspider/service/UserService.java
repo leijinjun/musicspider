@@ -1,0 +1,13 @@
+package cn.person.musicspider.service;
+
+import cn.person.musicspider.pojo.User;
+
+import java.util.List;
+
+/**
+ * Created by lei2j on 2018/5/12.
+ */
+public interface UserService {
+
+    void addBatchUsers(List<User> userList);
+}

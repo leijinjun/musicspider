@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	 xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+	http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util-4.0.xsd
+	http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+	<!-- 提供一些默认的映射处理器和适配器 -->
+	<mvc:annotation-driven>
+		<mvc:message-converters register-defaults="false">
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+			<bean class="org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter"/>
+			<bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+			<bean class="org.springframework.http.converter.BufferedImageHttpMessageConverter"/>
+			<bean id="fastJsonHttpMessageConverter" class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/html;charset=utf-8</value>
+						<value>application/json;charset=utf-8</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+	<!-- 静态资源交给服务器 -->
+	<!-- <mvc:default-servlet-handler/> -->
+	<!-- 文件上传解析器,id名不能更改，须与dispatcherServlet常量中一致 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="utf-8"/>
+		<property name="maxUploadSize" value="5242880"/>
+	</bean>
+	
+	<!-- 视图解析器 -->
+	<bean id="jspResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"/>
+		<property name="suffix" value=".jsp"/>
+		<property name="order" value="2"/>
+	</bean>
+	
+	<bean id="beanNameViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="1" />
+	</bean>
+	
+	<bean id="mediaTypeFileExtensionResolver" class="org.springframework.web.accept.ContentNegotiationManager">
+	</bean>
+	
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="contentNegotiationManager" ref="mediaTypeFileExtensionResolver"/>
+		<property name="viewResolvers">
+			<list>
+				<ref bean="jspResolver"/>
+				<ref bean="beanNameViewResolver"/>
+			</list>
+		</property>
+	</bean>
+	<!-- 像下面这样设置，如果请求为/，则不通过controller，而直接解析为/index.jsp -->
+    <mvc:view-controller path="/" view-name="index" />
+	<mvc:resources location="/css/" mapping="/css/**"/>
+	<mvc:resources location="/js/" mapping="/js/**"/>
+	<mvc:resources location="/fonts/" mapping="/fonts/**"/>
+	<mvc:resources location="/images/" mapping="/images/**"/>
+	<mvc:resources location="/layui/" mapping="/layui/**"/>
+	<mvc:resources location="/bootstrap/" mapping="/bootstrap/**"/>
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 拦截所有 -->
+			<mvc:mapping path="/**"/>
+			<mvc:exclude-mapping path="/js/**"/>
+			<mvc:exclude-mapping path="/css/**"/>
+			<mvc:exclude-mapping path="/fonts/**"/>
+			<mvc:exclude-mapping path="/images/**"/>
+			<mvc:exclude-mapping path="/layui/**"/>
+			<mvc:exclude-mapping path="/bootstrap/**"/>
+			<bean class="cn.person.musicspider.web.interceptor.ResponseIntercepter"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<context:component-scan base-package="cn.person.musicspider.web"/>
+
+</beans>

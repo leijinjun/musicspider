@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+ <configuration>
+ 	<settings>
+ 		<!--驼峰命名  -->
+ 		<setting name="mapUnderscoreToCamelCase" value="true"/>
+ 		<!-- 日志前缀 -->
+ 		<setting name="logPrefix" value="mybatis"/>
+ 		<!-- 日志实现 -->
+ 		<setting name="logImpl" value="SLF4J"/>
+ 		<!-- 缓存开关 -->
+ 		<setting name="cacheEnabled" value="false"/>
+ 		<!-- 延迟加载的全局开关,当开启时，所有关联对象都会延迟加载。
+	 	特定关联关系中可通过设置fetchType属性来覆盖该项的开关状态。  -->
+	 	<!-- 只适用于子查询 -->
+ 		<setting name="lazyLoadingEnabled" value="true"/>
+ 		<!-- 为false时，当需要适用关联对象属性时，才会加载 ，为true时，关联对象会在主对象查询后，经过几秒后会加载关联对象-->
+ 		<setting name="aggressiveLazyLoading" value="fasle"/>
+ 	</settings>
+ 	<!-- 类型别名是为 Java 类型命名的一个短的名字。
+	 它只和 XML 配置有关，存在的意义仅在于用来减少类完全限定名的冗余 -->
+ 	<typeAliases>
+ 		<typeAlias type="java.util.Set" alias="Set"/>
+ 		<package name="cn.person.musicspider.pojo"/>
+ 		<package name="cn.person.musicspider.web.vo"/>
+ 	</typeAliases>
+ 	<typeHandlers>
+		<!-- 将enum类型映射对应的整形 --> 	
+ 		<typeHandler handler="org.apache.ibatis.type.EnumOrdinalTypeHandler" javaType="cn.person.musicspider.enums.RelationType"/>
+ 		<typeHandler handler="cn.person.musicspider.dao.handler.BooleanHandler"/>
+ 	</typeHandlers>
+ 	<plugins>
+		<plugin interceptor="com.github.pagehelper.PageHelper">
+			<property name="dialect" value="mysql"/>
+        <!-- 该参数默认为false -->
+     
+        <!-- 设置为true时，使用RowBounds分页会进行count查询 -->
+        <property name="rowBoundsWithCount" value="true"/>
+        <!-- 设置为true时，如果pageSize=0或者RowBounds.limit = 0就会查询出全部的结果 -->
+        <!-- （相当于没有执行分页查询，但是返回结果仍然是Page类型）-->
+        <property name="pageSizeZero" value="true"/>
+        <!-- 3.3.0版本可用 - 分页参数合理化，默认false禁用 -->
+        <!-- 启用合理化时，如果pageNum<1会查询第一页，如果pageNum>pages会查询最后一页 -->
+        <!-- 禁用合理化时，如果pageNum<1或pageNum>pages会返回空数据 -->
+        <property name="reasonable" value="true"/>
+		</plugin>
+		
+		<plugin interceptor="com.github.abel533.mapperhelper.MapperInterceptor">
+			<!--主键自增回写方法,默认值MYSQL -->
+			<property name="IDENTITY" value="MYSQL" />
+			<!--通用Mapper默认接口，我们定义的Mapper需要实现该接口 -->
+			<property name="mappers" value="com.github.abel533.mapper.Mapper" />
+		</plugin>
+	</plugins>
+ </configuration>

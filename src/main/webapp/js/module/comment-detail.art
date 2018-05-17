@@ -1,0 +1,36 @@
+<table>
+	<thead>
+		<tr>
+			<th>用户ID</th>
+			<th>用户类型</th>
+			<th>VIP</th>
+			<th>用户昵称</th>
+			<th>用户图像</th>
+			<th>回复内容</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{each items vo index}}
+			<tr>
+				<td>{{vo.user.userId}}</td>
+				<td>
+					{{if(vo.user.userType==0)}}
+						普通用户
+					{{else}}
+						VIP
+					{{/if}}
+				</td>
+				<td>
+					{{if(vo.user.userType!=0)}}
+						等级{{vo.user.vipType}}
+					{{else}}
+						此用户不是VIP
+					{{/if}}
+				</td>
+				<td>{{vo.user.nickname}}</td>
+				<td><img height="43px;" src="{{vo.user.avatarUrl}}"/></td>
+				<td>{{vo.content}}</td>
+			</tr>
+		{{/each}}
+	</tbody>
+</table>

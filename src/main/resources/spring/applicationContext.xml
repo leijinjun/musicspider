@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	 xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+	http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+	<bean id="scUtil" class="cn.person.musicspider.core.utils.SpringContextUtil"/>
+	
+	<!-- 使用spring自带的占位符替换功能 -->
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<!-- 允许JVM参数覆盖 -->
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+		<!-- 忽略没有找到的资源文件 -->
+		<property name="ignoreResourceNotFound" value="true" />
+		<!-- 配置资源文件 -->
+		<property name="locations">
+			<list>
+				<value>classpath:env/local.properties</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="rabbitMQService" class="cn.person.musicspider.mq.service.impl.RabbitMQServiceImpl" scope="singleton">
+		<constructor-arg index="0" type="java.lang.String" value="${mq.host}"></constructor-arg>
+		<constructor-arg index="1" type="java.lang.Integer" value="${mq.port}"></constructor-arg>
+		<constructor-arg index="2" type="java.lang.String" value="${mq.username}"></constructor-arg>
+		<constructor-arg index="3" type="java.lang.String" value="${mq.password}"></constructor-arg>
+	</bean>
+	
+	<!-- 加载配置文件 -->
+	<!-- <context:property-placeholder location="classpath:jdbc.properties"/> -->
+	<!-- 开启包扫描 -->
+	<context:component-scan base-package="cn.person.musicspider"/>
+	<!-- 开启注解扫描 -->
+	<context:annotation-config/>
+	
+	<!-- <import resource="applicationContext-schedule.xml"/> -->	
+</beans>

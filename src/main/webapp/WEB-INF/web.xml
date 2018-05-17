@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
+  	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring/applicationContext*.xml</param-value>
+	</context-param>
+	<!-- 加载spring容器 -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+	<!-- 配置SpringMVC -->
+	<servlet>
+		<servlet-name>musicspider</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!-- 初始化参数，指定SpringMVC的配置文件路径，不再找WEB-INF下的默认配置 -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring/musicspider-servlet.xml</param-value>
+		</init-param>
+		<!-- 0：第一次被调用时创建； 1：Tomcat启动时就创建 -->
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>musicspider</servlet-name>
+		<!-- 拦截除了JSP以外的所有路径，不用再写.do了 -->
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	  <servlet>  
+	    <servlet-name>DruidStatView</servlet-name>  
+	    <servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>  
+		<init-param>
+			<param-name>username</param-name>
+			<param-value>lei2j</param-value>
+		</init-param>
+		<init-param>
+			<param-name>password</param-name>
+			<param-value>516899</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>  
+	    <servlet-name>DruidStatView</servlet-name>  
+	    <url-pattern>/druid/*</url-pattern>  
+	</servlet-mapping> 
+</web-app>
