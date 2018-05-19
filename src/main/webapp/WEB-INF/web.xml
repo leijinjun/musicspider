@@ -33,11 +33,11 @@
 	    <servlet-name>DruidStatView</servlet-name>  
 	    <servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>  
 		<init-param>
-			<param-name>username</param-name>
+			<param-name>loginUsername</param-name>
 			<param-value>lei2j</param-value>
 		</init-param>
 		<init-param>
-			<param-name>password</param-name>
+			<param-name>loginPassword</param-name>
 			<param-value>516899</param-value>
 		</init-param>
 	</servlet>

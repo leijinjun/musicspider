@@ -13,7 +13,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import cn.person.musicspider.pojo.User;
 import cn.person.musicspider.result.Response;
+import cn.person.musicspider.service.UserService;
 import cn.person.musicspider.web.vo.SongVo;
 import org.jsoup.Connection;
 import org.jsoup.Connection.Method;
@@ -22,18 +24,14 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import cn.person.musicspider.base.controller.BaseController;
-import cn.person.musicspider.pojo.Singer;
-import cn.person.musicspider.result.Pagination;
-import cn.person.musicspider.service.SingerService;
 import cn.person.musicspider.service.SongService;
 import cn.person.musicspider.service.cache.RedisService;
 
@@ -43,7 +41,7 @@ public class SingerController extends BaseController {
 
 	
 	@Autowired
-	private SingerService singerService;
+	private UserService userService;
 	@Autowired
 	private SongService songService;
 	@Autowired
@@ -51,23 +49,29 @@ public class SingerController extends BaseController {
 	LinkedBlockingDeque<Runnable> blockingDeque = new LinkedBlockingDeque<>();
 	ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 20, Integer.MAX_VALUE, TimeUnit.SECONDS, blockingDeque);
 	
-	/**获取歌手信息及其歌手主页url
-	 * @param url:http://music.163.com/discover/artist
+	/**init,获取所有歌手信息及其歌手主页url
+	 *
 	 * @return
 	 */
 	@RequestMapping("/cat")
 	@ResponseBody
-	public Response singerAll(String url){
-		if(url==null){
-			return Response.OK;
-		}
+	public Response singerAll(@RequestParam("limit") Integer limit){
+		String url = "http://music.163.com/discover/artist";
 		try {
 			Connection.Response result = Jsoup.connect(url).method(Method.GET).execute();
 			List<String> urlList = new LinkedList<>();
 			Elements els = result.parse().body().select("#singer-cat-nav").select("div[class='blk']");
+			if(limit!=null){
+				Element element = els.get(limit);
+				els.clear();
+				els.add(element);
+			}
 			Iterator<Element> it = els.iterator();
 			while (it.hasNext()) {
 				Element next = it.next();
+				if("其他".equals(next.select("h2[class='tit']").get(0).text().trim())){
+					continue;
+				}
 				Elements elsTag = next.getElementsByTag("li");
 				Iterator<Element> itTag = elsTag.iterator();
 				while(itTag.hasNext()){
@@ -85,7 +89,7 @@ public class SingerController extends BaseController {
 					try {
 						els2 = response.parse().body().select("#initial-selector").select("li");
 						Iterator<Element> iterator2 = els2.iterator();
-						List<String> childUrlList = new LinkedList<String>();
+						List<String> childUrlList = new LinkedList<>();
 						while (iterator2.hasNext()) {
 							Element next2 = iterator2.next();
 							Elements a = next2.getElementsByTag("a");
@@ -98,47 +102,41 @@ public class SingerController extends BaseController {
 							Connection.Response res = Jsoup.connect(n1).method(Method.GET).execute();
 							Elements els3 = res.parse().body().select("#m-artist-box").select("li");
 							Iterator<Element> it2 = els3.iterator();
-							Set<String> singerurlLists = new HashSet<String>();
+							Set<String> singerurlLists = new HashSet<>();
 							while(it2.hasNext()){
 								Element next2 = it2.next();
 								Elements img = next2.getElementsByTag("img");
-								Map<String, Object> obj = new HashMap<String, Object>();
+								Map<String, Object> obj = new HashMap<>();
 								if(img!=null&&img.size()>0){
 									String src = img.get(0).attr("src");
-									obj.put("photoURL", src);
+									obj.put("photoUrl", src);
 								}else{
-									obj.put("photoURL", "");
+									obj.put("photoUrl", "");
 								}
 								obj.put("descipt", "");
 								Elements el = next2.getElementsByTag("a");
 								Element tempEl = new Element("a");
 								if(el!=null&&el.size()>1){
 									tempEl = el.get(1);
-									
 								}else{
 									tempEl = el.get(0);
 								}
-								obj.put("singerName", tempEl.text());
+								obj.put("name", tempEl.text());
 								String href = tempEl.attr("href");
-								obj.put("singerId", href.substring(href.indexOf("id=")+3));
-								obj.put("isHot", n1.contains("initial=-1")?0:1);
-							    String msg = JSONObject.toJSONString(obj);
-							    Singer singer = JSONObject.parseObject(msg, Singer.class);
+								obj.put("userId", href.substring(href.indexOf("id=")+3));
+								String msg = JSONObject.toJSONString(obj);
+								User user = JSONObject.parseObject(msg, User.class);
+								user.setIsAuth(1);
 //								producerService.sendMsg(RoutingKey.SPIDER_SINGER_CREATE.getSendKey(), msg);
-							    Thread t = new Thread(){
-
-									@Override
-									public void run() {
-										try {
-											singerService.addSinger(singer);
-										} catch (Exception e) {
-											e.printStackTrace();
-										}
+							    executor.execute(()->{
+									try {
+										userService.addUser(user);
+//										singerService.addSinger(singer);
+									} catch (Exception e) {
+										e.printStackTrace();
 									}
-							    	
-							    };
-							    executor.execute(t);
-								Object id = obj.get("singerId");
+								});
+								Object id = obj.get("userId");
 								singerurlLists.add("http://music.163.com/artist?id="+id);
 							}
 							redisService.rpush("spider-singer-url-list", new ArrayList<>(singerurlLists));
@@ -183,8 +181,8 @@ public class SingerController extends BaseController {
 							String text = textarea.get(0).text();
 							JSONArray array = JSONArray.parseArray(text);
 							if (array != null && array.size() > 0) {
-								Set<String> songURLLists = new HashSet<String>();
-								Set<String> commentURLLists = new HashSet<String>();
+								Set<String> songURLLists = new HashSet<>();
+								Set<String> commentURLLists = new HashSet<>();
 								for (int i = 0; i < array.size(); i++) {
 									JSONObject itemJSON = array.getJSONObject(i);
 									SongVo song = new SongVo();
@@ -192,7 +190,7 @@ public class SingerController extends BaseController {
 									song.setSongName(itemJSON.getString("name"));
 									song.setDuration(itemJSON.getInteger("duration"));
 									song.setScore(itemJSON.getInteger("score"));
-									Map<String, Object> map = new HashMap<String, Object>();
+									Map<String, Object> map = new HashMap<>();
 									map.put("commentURL", "http://music.163.com/weapi/v1/resource/comments/"
 											+ itemJSON.getString("commentThreadId"));
 									map.put("musicId", song.getSongId());
@@ -200,21 +198,16 @@ public class SingerController extends BaseController {
 									commentURLLists.add(JSONObject.toJSONString(map));
 //									String msg = JSONObject.toJSONString(song);
 //									producerService.sendMsg(RoutingKey.SPIDER_SONG_CREATE.getSendKey(), msg);
-									Thread t = new Thread(){
-										@Override
-										public void run() {
-											try {
-												songService.addSong(song);
-											} catch (Exception e) {
-												e.printStackTrace();
-											}
+									executor.execute(()->{
+										try {
+											songService.addSong(song);
+										} catch (Exception e) {
+											e.printStackTrace();
 										}
-										
-									};
-									executor.execute(t);
-									redisService.rpush("spider.song.url.list", new ArrayList<String>(songURLLists));
-									redisService.rpush("spider.comment.url.list", new ArrayList<String>(commentURLLists));
+									});
 								}
+								redisService.rpush("spider.song.url.list", new ArrayList<>(songURLLists));
+								redisService.rpush("spider.comment.url.list", new ArrayList<>(commentURLLists));
 							}
 						}
 					}
@@ -226,20 +219,14 @@ public class SingerController extends BaseController {
 			}finally {
 				set.add(value);
 				value = redisService.rpop("spider-singer-url-list");
+				try {
+					Thread.sleep(3000);
+				}catch (Exception ex){
+					ex.printStackTrace();
+				}
 			}
 			}
 			set.clear();
 		return Response.OK;
 	}
-	
-	@RequestMapping(value="/list",method={RequestMethod.GET})
-	public String singerList(Integer limit,Integer pageNum,Model model){
-		Pagination<Singer> pagination = new Pagination<Singer>();
-		pagination.setLimit(limit);
-		pagination.setPageNum(pageNum);
-		singerService.findSingerList(pagination);
-		model.addAttribute("pageVo", pagination);
-		return "singer-list";
-	}
-
 }

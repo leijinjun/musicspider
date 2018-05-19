@@ -33,13 +33,13 @@
 		</property>
 	</bean>
 	
-	<bean id="rabbitMQService" class="cn.person.musicspider.mq.service.impl.RabbitMQServiceImpl" scope="singleton">
+	<!--<bean id="rabbitMQService" claRabbitMQServiceImplImpl" scope="singleton">
 		<constructor-arg index="0" type="java.lang.String" value="${mq.host}"></constructor-arg>
 		<constructor-arg index="1" type="java.lang.Integer" value="${mq.port}"></constructor-arg>
 		<constructor-arg index="2" type="java.lang.String" value="${mq.username}"></constructor-arg>
 		<constructor-arg index="3" type="java.lang.String" value="${mq.password}"></constructor-arg>
-	</bean>
-	
+	</bean>-->
+
 	<!-- 加载配置文件 -->
 	<!-- <context:property-placeholder location="classpath:jdbc.properties"/> -->
 	<!-- 开启包扫描 -->

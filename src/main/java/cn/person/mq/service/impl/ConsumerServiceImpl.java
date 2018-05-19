@@ -1,4 +1,4 @@
-package cn.person.musicspider.mq.service.impl;
+package cn.person.mq.service.impl;
 
 import java.io.IOException;
 
@@ -13,7 +13,7 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
-import cn.person.musicspider.mq.service.RabbitMQService;
+import cn.person.mq.service.RabbitMQService;
 
 @Service
 public class ConsumerServiceImpl {

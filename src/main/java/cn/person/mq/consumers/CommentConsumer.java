@@ -1,4 +1,4 @@
-package cn.person.musicspider.mq.consumers;
+package cn.person.mq.consumers;
 
 import java.util.List;
 
@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
 
-import cn.person.musicspider.mq.enums.RoutingKey;
-import cn.person.musicspider.mq.service.impl.ConsumerServiceImpl;
+import cn.person.mq.enums.RoutingKey;
+import cn.person.mq.service.impl.ConsumerServiceImpl;
 import cn.person.musicspider.pojo.Comment;
 import cn.person.musicspider.service.CommentService;
 

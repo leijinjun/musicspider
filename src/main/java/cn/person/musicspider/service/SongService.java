@@ -7,8 +7,6 @@ import cn.person.musicspider.web.vo.SongVo;
 
 public interface SongService {
 
-	void addBatchSong(List<SongVo> songs);
-
 	void updateSong(SongVo song);
 
 	void addSong(SongVo song);

@@ -10,9 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cn.person.musicspider.core.utils.BeanUtils;
-import cn.person.musicspider.core.utils.Sequence;
-import cn.person.musicspider.core.utils.Sequence.SequenceEnum;
-import cn.person.musicspider.dao.SongDAO;
 import cn.person.musicspider.mapper.SongMapper;
 import cn.person.musicspider.pojo.Song;
 import cn.person.musicspider.result.Pagination;
@@ -22,14 +19,7 @@ import cn.person.musicspider.service.SongService;
 public class SongServiceImpl implements SongService {
 
 	@Autowired
-	private SongDAO songDAO;
-	
-	@Autowired
 	private SongMapper songMapper;
-	@Override
-	public void addBatchSong(List<SongVo> songs) {
-		songDAO.addBatch(songs);
-	}
 	@Override
 	public void updateSong(SongVo song) {
 		song.setUpdateTime(new Date());
@@ -39,8 +29,10 @@ public class SongServiceImpl implements SongService {
 	}
 	@Override
 	public void addSong(SongVo song) {
-		song.setId(Sequence.getSequence(SequenceEnum.SONG_SINGERID));
-		songMapper.insertSelective(song);
+		Song existSong = songMapper.selectByPrimaryKey(song.getSongId());
+		if(existSong==null){
+			songMapper.insertSelective(song);
+		}
 	}
 	@Override
 	public SongVo findSongById(Long songId) {

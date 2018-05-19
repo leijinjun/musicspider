@@ -1,4 +1,4 @@
-package cn.person.musicspider.core.utils;
+package cn.musicspider.dao.sequence;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -8,12 +8,13 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.DataSource;
 
+import cn.person.musicspider.core.utils.SpringContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Sequence{
+public class SequenceUtil {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(Sequence.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SequenceUtil.class);
 	private static ReentrantLock lock = new ReentrantLock();
 	
 	private static DataSource dataSource;
@@ -21,7 +22,7 @@ public class Sequence{
 	static{
 		dataSource=(DataSource) SpringContextUtil.getBean("dataSource");
 	}
-	public static Long getSequence(SequenceEnum sequenceEnum){
+	public static Long getSequence(Sequence sequence){
 		Connection conn=null;
 		Statement st=null;
 		Long id=null;
@@ -29,7 +30,7 @@ public class Sequence{
 			lock.lock();
 			conn = dataSource.getConnection();
 			String sql="INSERT INTO `cs_sequence`(`name`) VALUES ('#')";
-			sql = sql.replace("#", sequenceEnum.getText());
+			sql = sql.replace("#", sequence.getText());
 			st = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			st.execute(sql,Statement.RETURN_GENERATED_KEYS);
 			ResultSet gKeys = st.getGeneratedKeys();
@@ -59,37 +60,7 @@ public class Sequence{
 				}
 			}
 		}
-		st=null;
-		conn=null;
 		return id;
-	}
-	
-	public enum SequenceEnum{
-		SONG_ALBUMID(1,"sequence_song_album"),
-		SONG_SINGERID(2,"sequence_song_singer"),
-		SONG_COMMENT(3,"sequence_song_comment");
-		
-		private SequenceEnum(int code,String text) {
-			this.code=code;
-			this.text=text;
-		}
-		
-		private int code;
-		private String text;
-		/**
-		 * @return the code
-		 */
-		public int getCode() {
-			return code;
-		}
-		
-		/**
-		 * @return the message
-		 */
-		public String getText() {
-			return text;
-		}
-		
 	}
 
 }

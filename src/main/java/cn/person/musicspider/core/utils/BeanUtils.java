@@ -9,13 +9,14 @@ import java.util.List;
 
 public class BeanUtils {
 
-	private static PropertyDescriptor getpropertDescriptor(PropertyDescriptor orgDescriptor,
+	private static PropertyDescriptor getPropertiesDescriptor(PropertyDescriptor orgDescriptor,
 			PropertyDescriptor[] destPropertyDescriptors) {
 		for (PropertyDescriptor descriptor : destPropertyDescriptors) {
 			if(descriptor.getDisplayName().equals("class")){
 				continue;
 			}
-			if(orgDescriptor.getPropertyType().equals(descriptor.getPropertyType())&&orgDescriptor.getName().equals(descriptor.getName())){
+			if(orgDescriptor.getPropertyType().equals(descriptor.getPropertyType())
+					&&orgDescriptor.getName().equals(descriptor.getName())){
 				return descriptor;
 			}
 		}
@@ -26,47 +27,40 @@ public class BeanUtils {
 		if(org == null){
 			return null;
 		}
-		Class<? extends Object> orgClazz = org.getClass();
+		T t = null;
 		try {
-			T t = clazz.newInstance();
+			t = clazz.newInstance();
+			copy(t,org);
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return t;
+	}
+	
+	public static void copyProperties(Object org,Object dest){
+		copy(dest,org);
+	}
+
+	private static void copy(Object dest,Object org){
+		Class<? extends Object> orgClazz = org.getClass();
+		Class<? extends Object> destClazz = dest.getClass();
+		try {
 			BeanInfo orgBeanInfo = Introspector.getBeanInfo(orgClazz);
-			BeanInfo destBeanInfo = Introspector.getBeanInfo(clazz);
+			BeanInfo destBeanInfo = Introspector.getBeanInfo(destClazz);
 			PropertyDescriptor[] orgPropertyDescriptors = orgBeanInfo.getPropertyDescriptors();
 			PropertyDescriptor[] destPropertyDescriptors = destBeanInfo.getPropertyDescriptors();
 			for (PropertyDescriptor orgDescriptor : orgPropertyDescriptors) {
 				if(orgDescriptor.getDisplayName().equals("class")){
 					continue;
 				}
-				PropertyDescriptor descriptor= getpropertDescriptor(orgDescriptor,destPropertyDescriptors);
-				Method writeMethod = descriptor.getWriteMethod();
-				Method readMethod = orgDescriptor.getReadMethod();
-				writeMethod.invoke(t, readMethod.invoke(org));
-			}
-			return t;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	public static void copyProperties(Object org,Object dest){
-		Class<? extends Object> orgClazz = org.getClass();
-		Class<? extends Object> destClazz = dest.getClass();
-		try {
-			BeanInfo orgBeanInfo = Introspector.getBeanInfo(orgClazz);
-			BeanInfo destBeanInfo = Introspector.getBeanInfo(destClazz);
-			PropertyDescriptor[] orgDescriptors = orgBeanInfo.getPropertyDescriptors();
-			PropertyDescriptor[] destDescriptors = destBeanInfo.getPropertyDescriptors();
-			for (PropertyDescriptor orgDescriptor : orgDescriptors) {
-				if(orgDescriptor.getDisplayName().equals("class")){
-					continue;
-				}
-				PropertyDescriptor descriptor= getpropertDescriptor(orgDescriptor,destDescriptors);
+				PropertyDescriptor descriptor= getPropertiesDescriptor(orgDescriptor,destPropertyDescriptors);
 				Method writeMethod = descriptor.getWriteMethod();
 				Method readMethod = orgDescriptor.getReadMethod();
 				writeMethod.invoke(dest, readMethod.invoke(org));
 			}
-		} catch (Exception e) {
+		}catch (Exception e){
 			e.printStackTrace();
 		}
 	}

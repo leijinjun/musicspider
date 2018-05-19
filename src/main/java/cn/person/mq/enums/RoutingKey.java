@@ -1,4 +1,4 @@
-package cn.person.musicspider.mq.enums;
+package cn.person.mq.enums;
 
 public enum RoutingKey{
 

@@ -1,7 +1,7 @@
 package cn.person.musicspider.service.impl;
 
-import cn.person.musicspider.core.utils.Sequence;
-import cn.person.musicspider.core.utils.Sequence.SequenceEnum;
+import cn.musicspider.dao.sequence.Sequence;
+import cn.musicspider.dao.sequence.SequenceUtil;
 import cn.person.musicspider.mapper.CommentMapper;
 import cn.person.musicspider.pojo.Comment;
 import cn.person.musicspider.result.Pagination;
@@ -25,9 +25,11 @@ public class CommentServiceImpl implements CommentService {
 		if(comments!=null){
 			for (Comment comment : comments) {
 				try {
-					comment.setId(Sequence.getSequence(SequenceEnum.SONG_SINGERID));
-					comment.setUpdateTime(new Date());
-					commentMapper.insertSelective(comment);
+					Comment existComment = commentMapper.selectByPrimaryKey(comment.getCommentId());
+					if(existComment==null){
+						comment.setUpdateTime(new Date());
+						commentMapper.insertSelective(comment);
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

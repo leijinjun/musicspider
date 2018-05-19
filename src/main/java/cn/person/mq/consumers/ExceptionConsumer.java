@@ -1,8 +1,8 @@
-package cn.person.musicspider.mq.consumers;
+package cn.person.mq.consumers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import cn.person.musicspider.mq.service.impl.ConsumerServiceImpl;
+import cn.person.mq.service.impl.ConsumerServiceImpl;
 
 public class ExceptionConsumer {
 

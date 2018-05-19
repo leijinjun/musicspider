@@ -1,6 +1,7 @@
 package cn.person.musicspider.service;
 
 import cn.person.musicspider.pojo.User;
+import cn.person.musicspider.result.Pagination;
 
 import java.util.List;
 
@@ -10,4 +11,6 @@ import java.util.List;
 public interface UserService {
 
     void addBatchUsers(List<User> userList);
+
+    void addUser(User user);
 }

@@ -6,10 +6,6 @@ import java.util.Properties;
 
 public class PropertiesUtils {
 
-	public PropertiesUtils(){
-		
-	}
-	
 	public static Properties load(String path){
 		InputStream in = PropertiesUtils.class.getClassLoader().getResourceAsStream(path);
 		Properties prop = new Properties();

@@ -1,4 +1,4 @@
-package cn.person.musicspider.mq.service;
+package cn.person.mq.service;
 
 import com.rabbitmq.client.Channel;
 

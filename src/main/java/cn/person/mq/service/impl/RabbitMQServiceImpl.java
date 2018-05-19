@@ -1,4 +1,4 @@
-package cn.person.musicspider.mq.service.impl;
+package cn.person.mq.service.impl;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -10,7 +10,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
-import cn.person.musicspider.mq.service.RabbitMQService;
+import cn.person.mq.service.RabbitMQService;
 
 public class RabbitMQServiceImpl implements RabbitMQService{
 

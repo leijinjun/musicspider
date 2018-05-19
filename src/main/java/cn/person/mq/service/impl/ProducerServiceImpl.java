@@ -1,4 +1,4 @@
-package cn.person.musicspider.mq.service.impl;
+package cn.person.mq.service.impl;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.rabbitmq.client.Channel;
 
-import cn.person.musicspider.mq.service.RabbitMQService;
+import cn.person.mq.service.RabbitMQService;
 
 @Service
 public class ProducerServiceImpl {
