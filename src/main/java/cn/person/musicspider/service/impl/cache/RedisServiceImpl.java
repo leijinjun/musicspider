@@ -103,4 +103,17 @@ public class RedisServiceImpl implements RedisService{
 			}
 		}
 	}
+
+	@Override
+	public void rpush(String key, String value) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.rpush(key,value);
+		}catch (Exception e){
+			e.printStackTrace();
+		}finally {
+			close(jedis);
+		}
+	}
 }

@@ -11,6 +11,8 @@ public interface RedisService{
 	public void remove(String key);
 	
 	public void rpush(String key,List<String> value);
+
+	public void rpush(String key,String value);
 	
 	public String rpop(String key);
 

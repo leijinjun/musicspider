@@ -16,6 +16,7 @@ import cn.person.musicspider.result.Response;
 import cn.person.musicspider.service.SongService;
 import cn.person.musicspider.service.UserService;
 import cn.person.musicspider.web.vo.SongVo;
+import org.apache.commons.httpclient.ConnectionPoolTimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Connection;
 import org.jsoup.Connection.Method;
@@ -230,7 +231,11 @@ public class CommentController extends BaseController{
 				//减缓抓取频率
 				Thread.sleep(3000);
 			}
-		}catch(Exception e){
+		}catch (IOException ex){
+			redisService.rpush(REDIS_COMMENT_KEY,map);
+			ex.printStackTrace();
+		}
+		catch(Exception e){
 			e.printStackTrace();
 		}
 	}
