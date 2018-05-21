@@ -25,12 +25,12 @@ public class UserServiceImpl implements UserService {
         if(userList!=null){
             for (User user : userList) {
                 try {
-                    User existUser = userMapper.selectByPrimaryKey(user.getUserId());
+                    User existUser = userMapper.getUserById(user.getUserId());
                     if(existUser!=null){
                         continue;
                     }
                     user.setUpdateTime(new Date());
-                    userMapper.insertSelective(user);
+                    userMapper.insertUser(user);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -40,11 +40,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addUser(User user) {
-        user.setUpdate_time(new Timestamp(System.currentTimeMillis()));
-        User existUser = userMapper.selectByPrimaryKey(user.getUserId());
+        user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+        User existUser = userMapper.getUserById(user.getUserId());
         if(existUser==null){
-            userMapper.insertSelective(user);
+            userMapper.insertUser(user);
         }
     }
 
+    @Override
+    public void findUserList(Pagination pagination) {
+        List<User> userList = userMapper.find(pagination.getOffset(),pagination.getLimit());
+        pagination.setItems(userList);
+    }
+
+    @Override
+    public void updateUser(User user) {
+        userMapper.updateUserById(user);
+    }
+
+    @Override
+    public User getUserById(Long userId) {
+        return userMapper.getUserById(userId);
+    }
 }

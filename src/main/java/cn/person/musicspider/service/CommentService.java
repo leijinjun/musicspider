@@ -13,6 +13,8 @@ public interface CommentService {
 	 */
 	void addBatchComms(List<Comment> comments);
 	
-	void findCommentPage(Pagination<CommentsVo> page);
+	Comment getCommentById(Long commentId);
+
+	void insertComment(Comment comment);
 
 }

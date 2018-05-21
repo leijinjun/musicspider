@@ -1,5 +1,6 @@
 package cn.person.musicspider.service.impl;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
@@ -22,7 +23,7 @@ public class SongServiceImpl implements SongService {
 	private SongMapper songMapper;
 	@Override
 	public void updateSong(SongVo song) {
-		song.setUpdateTime(new Date());
+		song.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 		Example example = new Example(SongVo.class);
 		example.or().andEqualTo("songId",song.getSongId());
 		songMapper.updateByExampleSelective(song,example);
@@ -47,7 +48,6 @@ public class SongServiceImpl implements SongService {
 	public void findSongList(Pagination<SongVo> pagination) {
 		List<Song> list = songMapper.findSongsList(pagination.getOffset(), pagination.getLimit());
 		List<SongVo> songVos = BeanUtils.copyPropertiesList(list, SongVo.class);
-		Stream<SongVo> stream = songVos.parallelStream();
 		pagination.setItems(songVos);
 	}
 

@@ -26,7 +26,7 @@ public class Song extends BasePO implements Serializable{
 	@GeneratedValue(generator="JDBC",strategy=GenerationType.AUTO)
 	private Long songId;
 
-	private Long userId;
+	private Long singerId;
 	
 	private String songName;
 
@@ -52,12 +52,12 @@ public class Song extends BasePO implements Serializable{
 		this.songId = songId;
 	}
 
-	public Long getUserId() {
-		return userId;
+	public Long getSingerId() {
+		return singerId;
 	}
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public void setSingerId(Long singerId) {
+		this.singerId = singerId;
 	}
 
 	public String getSongName() {

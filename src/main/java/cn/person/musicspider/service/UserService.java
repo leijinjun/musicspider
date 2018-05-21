@@ -13,4 +13,10 @@ public interface UserService {
     void addBatchUsers(List<User> userList);
 
     void addUser(User user);
+
+    void findUserList(Pagination pagination);
+
+    void updateUser(User user);
+
+    User getUserById(Long userId);
 }

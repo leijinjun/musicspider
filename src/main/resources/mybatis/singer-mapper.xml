@@ -2,17 +2,15 @@
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-  <mapper namespace="cn.person.musicspider.mapper.SongMapper">
-  <select id="findSongsList" resultType="song">
+  <mapper namespace="cn.person.musicspider.mapper.SingerMapper">
+  <select id="find" resultType="singer">
   	SELECT
-			s.song_id,
-			s.song_name,
-			s.lyric,
-			s.comment_count,
-			s.duration,
-			s.score
+			singer_id,
+			`name`,
+			photo_url,
+			descipt
 		FROM
-			cs_song s
+			cs_singer
 		LIMIT #{offset},#{limit};
   </select>
   </mapper>

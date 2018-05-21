@@ -21,29 +21,23 @@ public class Comment implements Serializable {
 	@Id
 	@GeneratedValue(generator="JDBC",strategy=GenerationType.AUTO)
 	private Long commentId;
-	
-	private String content;
-	
-	private Long relationId;
-	
-	private RelationType relationType;
-	
+
 	private Long userId;
-	
-	@Column(name="user_photoURL")
-	private String userPhotoURL;
-	
-	private Date commentTime;
-	
-	private Integer praiseCount;
-	
-	
+
+	private Long relationId;
+
+	private String content;
+
+	private RelationType relationType;
+
 	/**
 	 * 其它用户回复的评论
 	 */
 	private String beReplied;
-	
-	private String nickname;
+
+	private Integer praiseCount;
+
+	private Date commentTime;
 
 	private Date updateTime;
 
@@ -87,13 +81,6 @@ public class Comment implements Serializable {
 		this.userId = userId;
 	}
 
-	public String getUserPhotoURL() {
-		return userPhotoURL;
-	}
-
-	public void setUserPhotoURL(String userPhotoURL) {
-		this.userPhotoURL = userPhotoURL;
-	}
 
 	public Date getCommentTime() {
 		return commentTime;
@@ -117,14 +104,6 @@ public class Comment implements Serializable {
 
 	public void setBeReplied(String beReplied) {
 		this.beReplied = beReplied;
-	}
-
-	public String getNickname() {
-		return nickname;
-	}
-
-	public void setNickname(String nickname) {
-		this.nickname = nickname;
 	}
 
 	public Date getUpdateTime() {

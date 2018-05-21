@@ -1,6 +1,7 @@
 package cn.person.musicspider.web.controller;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,8 +14,14 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import cn.person.musicspider.encrypt.util.EncryptTools;
+import cn.person.musicspider.enums.AuthType;
+import cn.person.musicspider.enums.Gender;
+import cn.person.musicspider.pojo.Singer;
 import cn.person.musicspider.pojo.User;
+import cn.person.musicspider.result.Pagination;
 import cn.person.musicspider.result.Response;
+import cn.person.musicspider.service.SingerService;
 import cn.person.musicspider.service.UserService;
 import cn.person.musicspider.web.vo.SongVo;
 import org.jsoup.Connection;
@@ -46,8 +53,10 @@ public class SingerController extends BaseController {
 	private SongService songService;
 	@Autowired
 	private RedisService redisService;
+	@Autowired
+	private SingerService singerService;
 	LinkedBlockingDeque<Runnable> blockingDeque = new LinkedBlockingDeque<>();
-	ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 20, Integer.MAX_VALUE, TimeUnit.SECONDS, blockingDeque);
+	ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 5, Integer.MAX_VALUE, TimeUnit.SECONDS, blockingDeque);
 	
 	/**init,获取所有歌手信息及其歌手主页url
 	 *
@@ -123,20 +132,17 @@ public class SingerController extends BaseController {
 								}
 								obj.put("name", tempEl.text());
 								String href = tempEl.attr("href");
-								obj.put("userId", href.substring(href.indexOf("id=")+3));
+								obj.put("singerId", href.substring(href.indexOf("id=")+3));
 								String msg = JSONObject.toJSONString(obj);
-								User user = JSONObject.parseObject(msg, User.class);
-								user.setIsAuth(1);
-//								producerService.sendMsg(RoutingKey.SPIDER_SINGER_CREATE.getSendKey(), msg);
+								Singer singer = JSONObject.parseObject(msg, Singer.class);
 							    executor.execute(()->{
 									try {
-										userService.addUser(user);
-//										singerService.addSinger(singer);
+										singerService.addSinger(singer);
 									} catch (Exception e) {
 										e.printStackTrace();
 									}
 								});
-								Object id = obj.get("userId");
+								Object id = obj.get("singerId");
 								singerurlLists.add("http://music.163.com/artist?id="+id);
 							}
 							redisService.rpush("spider-singer-url-list", new ArrayList<>(singerurlLists));
@@ -164,16 +170,14 @@ public class SingerController extends BaseController {
 	@RequestMapping(value="/hotSongs")
 	@ResponseBody
 	public Response getHotSongs(){
-		HashSet<String> set = new HashSet<>();
 		String value = redisService.rpop("spider-singer-url-list");
 			while(value!=null){
 				LOGGER.info("获取歌曲URL:{}",value);
+				Long singerId = Long.parseLong(value.substring(value.indexOf("=")+1));
 			try {
-			 if(!set.contains(value)){
 				Connection.Response result = Jsoup.connect(value).method(Method.GET).execute();
 				//更新歌曲信息
-				Element body = null;
-					body = result.parse().body();
+				Element body = result.parse().body();
 					Elements els = body.select("#song-list-pre-cache");
 					if (els != null && els.size() > 0) {
 						Elements textarea = els.get(0).getElementsByTag("textarea");
@@ -190,6 +194,7 @@ public class SingerController extends BaseController {
 									song.setSongName(itemJSON.getString("name"));
 									song.setDuration(itemJSON.getInteger("duration"));
 									song.setScore(itemJSON.getInteger("score"));
+									song.setSingerId(singerId);
 									Map<String, Object> map = new HashMap<>();
 									map.put("commentURL", "http://music.163.com/weapi/v1/resource/comments/"
 											+ itemJSON.getString("commentThreadId"));
@@ -211,13 +216,11 @@ public class SingerController extends BaseController {
 							}
 						}
 					}
-			 }
 			}catch (IOException e) {
 				e.printStackTrace();
 			}catch (Exception e) {
 				e.printStackTrace();
 			}finally {
-				set.add(value);
 				value = redisService.rpop("spider-singer-url-list");
 				try {
 					Thread.sleep(3000);
@@ -226,7 +229,202 @@ public class SingerController extends BaseController {
 				}
 			}
 			}
-			set.clear();
 		return Response.OK;
 	}
+
+	@RequestMapping(value = "/songs")
+	@ResponseBody
+	public Response updateSong(){
+		Pagination pagination = new Pagination();
+		int pageNum = 1;
+		int limit = 100;
+		pagination.setPageNum(pageNum);
+		pagination.setLimit(limit);
+		songService.findSongList(pagination);
+		List<SongVo> items = pagination.getItems();
+		while (!items.isEmpty()){
+			for (SongVo songVo:
+				 items) {
+				Long songId = songVo.getSongId();
+				try {
+					Connection.Response response = Jsoup.connect("http://music.163.com/song?id=" + songId).method(Method.GET).execute();
+					Element body = response.parse().body();
+					Elements img = body.select("div[class*='u-cover'][class*='u-cover-6']").select("img");
+					String pic_url = img.attr("data-src");
+					String href = body.select("div[class='cnt']").select("a[class='s-fc7']").get(0).attr("href");
+					Long singerId = Long.parseLong(href.substring(href.indexOf("=")+1));
+					songVo.setSingerId(singerId);
+					songVo.setPicUrl(pic_url);
+					Map<String,Object> map = new HashMap<>();
+					map.put("id",554241075);
+					map.put("lv",-1);
+					Map<String, String> params = EncryptTools.commentAPI(JSONObject.toJSONString(map));
+					Connection.Response lyResponse = Jsoup.connect("http://music.163.com/weapi/song/lyric?csrf_token=").method(Method.POST).data(params).execute();
+					JSONObject lyricObj = JSONObject.parseObject(lyResponse.body());
+					String lrc = lyricObj.getJSONObject("lrc").getString("lyric");
+					songVo.setLyric(lrc);
+					songService.updateSong(songVo);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			pageNum++;
+			pagination.setPageNum(pageNum);
+			songService.findSongList(pagination);
+			items = pagination.getItems();
+		}
+		return Response.OK;
+	}
+
+	@RequestMapping("/singers")
+	@ResponseBody
+	public Response updateSingers(){
+		Pagination pagination = new Pagination();
+		int pageNum = 1;
+		int limit = 100;
+		pagination.setLimit(limit);
+		pagination.setPageNum(pageNum);
+		singerService.findSingerList(pagination);
+		List<Singer> items = pagination.getItems();
+		while (!items.isEmpty()){
+			for (Singer singer:
+				 items) {
+				Long singerId = singer.getSingerId();
+				String singerUrl = "http://music.163.com/artist?id="+singerId;
+				try {
+					Connection.Response sRes = Jsoup.connect(singerUrl).method(Method.GET).execute();
+					Element body = sRes.parse().body();
+					String photoUrl = body.select("div[class='btm']").next("img").attr("src");
+					singer.setPhotoUrl(photoUrl);
+					Connection.Response descRes = Jsoup.connect("http://music.163.com/artist/desc?id=" + singerId).method(Method.GET).execute();
+					String desc = descRes.parse().body().select("div[class='n-artdesc']").select("p").get(0).text();
+					singer.setDescipt(desc);
+					singerService.updateSinger(singer);
+					Element home = body.getElementById("artist-home");
+					if(home!=null){
+						String href = home.attr("href");
+						Long userId = Long.parseLong(href.substring(href.indexOf("=") + 1));
+						User existUser = userService.getUserById(userId);
+						User user = getUser(userId);
+						if(existUser!=null){
+							userService.updateUser(user);
+						}else {
+							userService.addUser(user);
+						}
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			pageNum++;
+			pagination.setPageNum(pageNum);
+			singerService.findSingerList(pagination);
+			items = pagination.getItems();
+		}
+		return Response.OK;
+	}
+
+	@RequestMapping(value = "users")
+	@ResponseBody
+	public Response updateUsers(){
+		Pagination pagination = new Pagination();
+		int pageNum = 1;
+		int limit = 100;
+		pagination.setPageNum(pageNum);
+		pagination.setLimit(limit);
+		userService.findUserList(pagination);
+		List<User> items = pagination.getItems();
+		while (!items.isEmpty()){
+			for (User user:
+					items) {
+				Long userId = user.getUserId();
+				userService.updateUser(getUser(userId));
+			}
+			pageNum++;
+			pagination.setPageNum(pageNum);
+			userService.findUserList(pagination);
+			items = pagination.getItems();
+		}
+		return Response.OK;
+	}
+
+	private static User getUser(Long userId){
+		User user = new User();
+		user.setUserId(userId);
+		try {
+			Connection.Response response = Jsoup.connect("http://music.163.com/user/home?id=" + userId).method(Method.GET).execute();
+			Element body = response.parse().body();
+			Element headBody = body.getElementById("head-box");
+			//用户昵称
+			String nickname = headBody.getElementById("j-name-wrap").select("span[class*='tit']").text();
+			user.setNickname(nickname);
+			//用户等级
+			String level = headBody.getElementById("j-name-wrap").select("span[class*='lev']").text();
+			user.setLevel(Integer.parseInt(level));
+			//用户性别
+			Elements genderEle = headBody.getElementById("j-name-wrap").select("i[class*='icn u-icn']");
+			if(genderEle.attr("class").contains("u-icn-02")){
+				user.setGender(Gender.FEMALE);
+			}else if(genderEle.attr("class").contains("u-icn-01")){
+				user.setGender(Gender.MALE);
+			}else {
+				user.setGender(Gender.UNKNOWN);
+			}
+			//用户认证状态
+			Elements authEles = headBody.select("p[class*='djp']");
+			if(authEles!=null&&!authEles.isEmpty()){
+				Elements authEle = authEles.select("i[class*='tag']");
+				if(authEle.attr("class").contains("u-icn2-pfv")){
+					user.setAuthType(AuthType.AUTH_V);
+				}else if(authEle.attr("class").contains("u-icn2-pfyyr")){
+					user.setAuthType(AuthType.AUTH_MUSICIAN);
+				}else if (authEle.attr("class").contains("u-icn2-pfdr")){
+					user.setAuthType(AuthType.AUTH_PLAYERS);
+				}
+				else {
+					user.setAuthType(AuthType.AUTH_NO);
+				}
+			}else{
+				user.setAuthType(AuthType.AUTH_NO);
+			}
+			//关注
+			String attentionCount = headBody.getElementById("follow_count").text();
+			user.setAttentionCount(Integer.parseInt(attentionCount));
+			//粉丝
+			String fanCount = headBody.getElementById("fan_count").text();
+			user.setFansCount(Integer.parseInt(fanCount));
+			//用户图片
+			String photoUrl = headBody.getElementById("ava").getElementsByTag("img").attr("src");
+			user.setPhotoUrl(photoUrl);
+			//个人介绍
+			Elements infoEles = headBody.select("div[class='inf s-fc3 f-brk']");
+			if(infoEles!=null&&!infoEles.isEmpty()){
+				user.setTitle(infoEles.text());
+			}
+			Elements infoSeEles = headBody.select("div[class='inf s-fc3']");
+			if(infoSeEles!=null&&!infoSeEles.isEmpty()){
+				for (Element e:
+						infoSeEles) {
+					Elements spanEles = e.getElementsByTag("span");
+					if(spanEles!=null&&!spanEles.isEmpty()){
+						for (Element el:
+								spanEles) {
+							if(el.hasAttr("data-age")) {
+								user.setBirthDay(new Date(Long.parseLong(el.attr("data-age"))));
+								continue;
+							}
+							if(!el.hasAttr("class")&&el.text().contains("所在地区")){
+								user.setArea(el.text().replace("所在地区：",""));
+								continue;
+							}
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return user;
+	}
+
 }

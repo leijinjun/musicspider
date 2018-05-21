@@ -10,10 +10,13 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedJdbcTypes;
 
 import cn.person.musicspider.core.EnumType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @MappedJdbcTypes(value=JdbcType.SMALLINT)
 public class EnumHandler<T extends EnumType> extends BaseTypeHandler<T>{
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(EnumHandler.class);
 	private Class<T> type;
 	private final T[] enums;
 	
@@ -21,6 +24,7 @@ public class EnumHandler<T extends EnumType> extends BaseTypeHandler<T>{
 		if (type == null) throw new IllegalArgumentException("Type argument cannot be null");
 		this.type = type;
 		this.enums = type.getEnumConstants();
+		LOGGER.info("create object:{}",type.getName());
 		if (this.enums == null) throw new IllegalArgumentException(type.getSimpleName() + " does not represent an enum type.");
 	}
 	@Override
