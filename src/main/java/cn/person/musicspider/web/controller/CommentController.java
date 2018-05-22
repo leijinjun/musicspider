@@ -16,7 +16,6 @@ import cn.person.musicspider.result.Response;
 import cn.person.musicspider.service.SongService;
 import cn.person.musicspider.service.UserService;
 import cn.person.musicspider.web.vo.SongVo;
-import org.apache.commons.httpclient.ConnectionPoolTimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Connection;
 import org.jsoup.Connection.Method;
@@ -154,7 +153,7 @@ public class CommentController extends BaseController{
 				String body = result.body();
 				JSONObject jo = JSONObject.parseObject(body);
 				if(jo.getInteger("code").equals(-460)){
-					throw new RuntimeException(jo.toJSONString());
+					throw new Exception(jo.toJSONString());
 				}
 				LOGGER.debug("result:{}",jo);
 				Integer total = jo.getInteger("total");
@@ -165,7 +164,7 @@ public class CommentController extends BaseController{
 					songService.updateSong(song);
 				}
 				if(total<9999||offset>total){//过滤冷门歌曲评论
-					Thread.sleep(3000);
+					Thread.sleep(4000);
 					break;
 				}
 				more = jo.getBoolean("more")==null?false:jo.getBoolean("more");
@@ -229,13 +228,10 @@ public class CommentController extends BaseController{
 					break;
 				}*/
 				//减缓抓取频率
-				Thread.sleep(3000);
+				Thread.sleep(4000);
 			}
-		}catch (IOException ex){
+		} catch(Exception e){
 			redisService.rpush(REDIS_COMMENT_KEY,map);
-			ex.printStackTrace();
-		}
-		catch(Exception e){
 			e.printStackTrace();
 		}
 	}

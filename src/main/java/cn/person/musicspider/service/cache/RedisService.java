@@ -1,22 +1,40 @@
 package cn.person.musicspider.service.cache;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 import java.util.List;
+import java.util.Set;
 
 public interface RedisService{
 
-	public void set(String key,String value);
+	 void set(String key,String value);
 
-	public void remove(String key);
+	 void remove(String key);
 	
-	public void rpush(String key,List<String> value);
+	 void rpush(String key,List<String> value);
 
-	public void rpush(String key,String value);
+	 void rpush(String key,String value);
 	
-	public String rpop(String key);
+	 String rpop(String key);
 
-	public List<String> lRange(String key,Long start,Long end);
+	 List<String> lRange(String key,Long start,Long end);
 
-	public void close(Jedis jedis);
+	 void sadd(String key,String... members);
+
+	 Long srem(String key,String... member);
+
+	 String spop(String key);
+
+	 Set<String> sinter(String... keys);
+
+	default void close(Jedis jedis){
+		if(jedis!=null){
+			try {
+				jedis.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }

@@ -1,8 +1,10 @@
 package cn.person.musicspider.service.impl.cache;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.ibatis.cache.NullCacheKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,10 +12,11 @@ import cn.person.musicspider.service.cache.RedisService;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import javax.swing.*;
+
 @Service
 public class RedisServiceImpl implements RedisService{
 
-	private static final ReentrantLock lock = new ReentrantLock();
 	@Autowired
 	private JedisPool jedisPool;
 	
@@ -94,17 +97,6 @@ public class RedisServiceImpl implements RedisService{
 	}
 
 	@Override
-	public void close(Jedis jedis) {
-		if(jedis!=null){
-			try {
-				jedis.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@Override
 	public void rpush(String key, String value) {
 		Jedis jedis = null;
 		try {
@@ -115,5 +107,61 @@ public class RedisServiceImpl implements RedisService{
 		}finally {
 			close(jedis);
 		}
+	}
+
+	@Override
+	public void sadd(String key, String... members) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.sadd(key,members);
+		}catch (Exception ex){
+			ex.printStackTrace();
+		}finally {
+			close(jedis);
+		}
+	}
+
+	@Override
+	public Long srem(String key, String... member) {
+		Jedis jedis = null;
+		Long rLen = 0L;
+		try {
+			jedis = jedisPool.getResource();
+			rLen = jedis.srem(key,member);
+		}catch (Exception ex){
+			ex.printStackTrace();
+		}finally {
+			close(jedis);
+		}
+		return rLen;
+	}
+
+	@Override
+	public String spop(String key) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			return jedis.spop(key);
+		}catch (Exception ex){
+			ex.printStackTrace();
+		}finally {
+			close(jedis);
+		}
+		return null;
+	}
+
+	@Override
+	public Set<String> sinter(String... keys) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			return jedis.sinter(keys);
+		}catch (Exception ex){
+			ex.printStackTrace();
+		}finally {
+			close(jedis);
+		}
+		return null;
 	}
 }
