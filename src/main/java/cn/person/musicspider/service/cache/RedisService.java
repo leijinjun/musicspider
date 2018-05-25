@@ -16,7 +16,7 @@ public interface RedisService{
 
 	 void rpush(String key,String value);
 	
-	 String rpop(String key);
+	 String lpop(String key);
 
 	 List<String> lRange(String key,Long start,Long end);
 

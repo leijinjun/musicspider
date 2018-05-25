@@ -115,9 +115,5 @@ public class YamlTest {
 		Object load = Yaml.load(in);
 		//System.out.println(load);
 	}
-	
-	@Test
-	public void test3(){
-		
-	}
+
 }

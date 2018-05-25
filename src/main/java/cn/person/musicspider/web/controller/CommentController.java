@@ -59,17 +59,16 @@ public class CommentController extends BaseController{
 	@ResponseBody
 	public Response comment(){
 		new Thread(()->{
-			String map = redisService.rpop(REDIS_COMMENT_KEY);
+			String map = redisService.lpop(REDIS_COMMENT_KEY);
 			LinkedBlockingDeque<Runnable> blockingDeque = new LinkedBlockingDeque<>();
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 5, Integer.MAX_VALUE, TimeUnit.SECONDS, blockingDeque);
-			while(map!=null){
-				try {
-					getComments(map);
-				}catch (Exception e){
-					e.printStackTrace();
-				}finally {
-					map = redisService.rpop(REDIS_COMMENT_KEY);
-				}
+			try {
+				while(map!=null){
+                    getComments(map);
+                    map = redisService.lpop(REDIS_COMMENT_KEY);
+                }
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 
 		}).start();
@@ -126,33 +125,36 @@ public class CommentController extends BaseController{
 			JSONObject param = new JSONObject();
 			param.put("commentURL","http://music.163.com/weapi/v1/resource/comments/R_SO_4_"+singerId);
 			param.put("musicId",singerId);
-			getComments(param.toJSONString());
+			try {
+				getComments(param.toJSONString());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		return Response.OK;
 	}
 
-	private void getComments(String map){
+	private void getComments(String map) throws Exception{
 		LOGGER.info("获取评论URL:{}",map);
-		try{
-			Map<String, Object> param = new HashMap<>();
-			int pageNum=1;
-			int limit = 100;
-			int offset = (pageNum-1)*limit;
-			param.put("limit", limit);
-			param.put("offset", offset);
-			Boolean more = true;
-			Boolean moreHot = true;
-			Boolean isUpdate = true;
-			JSONObject dataObj = JSONObject.parseObject(map);
-			String url = dataObj.getString("commentURL");
-			Long musicId = dataObj.getLong("musicId");
-			while(more){
+		Map<String, Object> param = new HashMap<>();
+		int pageNum=1;
+		int limit = 100;
+		int offset = (pageNum-1)*limit;
+		param.put("limit", limit);
+		param.put("offset", offset);
+		Boolean isUpdate = true;
+		JSONObject dataObj = JSONObject.parseObject(map);
+		String url = dataObj.getString("commentURL");
+		Long musicId = dataObj.getLong("musicId");
+		while(true){
+			try {
 				LOGGER.info("musicId:{},params:{}",musicId,param);
 				Map<String,String> data = EncryptTools.commentAPI(JSONObject.toJSONString(param));
 				Connection.Response result = Jsoup.connect(url).data(data).method(Method.POST).execute();
 				String body = result.body();
 				JSONObject jo = JSONObject.parseObject(body);
 				if(jo.getInteger("code").equals(-460)){
+					redisService.rpush(REDIS_COMMENT_KEY,map);
 					throw new Exception(jo.toJSONString());
 				}
 				LOGGER.debug("result:{}",jo);
@@ -167,16 +169,11 @@ public class CommentController extends BaseController{
 					Thread.sleep(4000);
 					break;
 				}
-				more = jo.getBoolean("more")==null?false:jo.getBoolean("more");
-				if(!more){
-					LOGGER.info("end");
-					break;
-				}
 				isUpdate = false;
 				JSONArray comms = jo.getJSONArray("comments");
-				moreHot = jo.getBoolean("moreHot")==null?false:jo.getBoolean("moreHot");
-				if(moreHot){
-					comms.addAll(jo.getJSONArray("hotComments"));
+				JSONArray hotJSONArr = jo.getJSONArray("hotComments");
+				if(hotJSONArr!=null&&!hotJSONArr.isEmpty()){
+					comms.addAll(hotJSONArr);
 				}
 				JSONArray topJSONArr = jo.getJSONArray("topComments");
 				if(pageNum==1&&topJSONArr!=null&&!topJSONArr.isEmpty()){
@@ -212,27 +209,24 @@ public class CommentController extends BaseController{
 						commList.add(comment);
 					}
 					if(!commList.isEmpty()){
-						try {
-							LOGGER.info("执行中：{}",commList);
-							commentService.addBatchComms(commList);
-							userService.addBatchUsers(userList);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+						LOGGER.info("执行中：{}",commList);
+						commentService.addBatchComms(commList);
+						userService.addBatchUsers(userList);
 					}
 				}
 				pageNum++;
 				offset=(pageNum-1)*limit;
 				param.put("offset", offset);
-				/*if((pageNum-1)*limit>1000&&total<20000){
-					break;
-				}*/
 				//减缓抓取频率
 				Thread.sleep(4000);
+			}catch (InterruptedException e){
+				e.printStackTrace();
+			}catch (IOException e){
+				e.printStackTrace();
 			}
-		} catch(Exception e){
-			redisService.rpush(REDIS_COMMENT_KEY,map);
-			e.printStackTrace();
+			catch (RuntimeException e) {
+				e.printStackTrace();
+		}
 		}
 	}
 }

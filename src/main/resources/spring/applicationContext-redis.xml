@@ -16,7 +16,7 @@
 	http://www.springframework.org/schema/util
 	http://www.springframework.org/schema/util/spring-util-4.0.xsd">
 
-<!-- 	<context:property-placeholder location="classpath:env/local.properties"/>-->	
+<!-- 	<context:property-placeholder location="classpprod:env/local.properties"/>-->
 	
 	<bean id="jedisConfig" class="redis.clients.jedis.JedisPoolConfig">
 		<!-- 最大jedis实例数 -->

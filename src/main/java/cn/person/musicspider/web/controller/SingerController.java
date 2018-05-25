@@ -170,7 +170,7 @@ public class SingerController extends BaseController {
 	@RequestMapping(value="/hotSongs")
 	@ResponseBody
 	public Response getHotSongs(){
-		String value = redisService.rpop("spider-singer-url-list");
+		String value = redisService.lpop("spider-singer-url-list");
 			while(value!=null){
 				LOGGER.info("获取歌曲URL:{}",value);
 				Long singerId = Long.parseLong(value.substring(value.indexOf("=")+1));
@@ -221,7 +221,7 @@ public class SingerController extends BaseController {
 			}catch (Exception e) {
 				e.printStackTrace();
 			}finally {
-				value = redisService.rpop("spider-singer-url-list");
+				value = redisService.lpop("spider-singer-url-list");
 				try {
 					Thread.sleep(3000);
 				}catch (Exception ex){

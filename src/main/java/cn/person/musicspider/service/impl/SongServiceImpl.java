@@ -15,13 +15,16 @@ import cn.person.musicspider.mapper.SongMapper;
 import cn.person.musicspider.pojo.Song;
 import cn.person.musicspider.result.Pagination;
 import cn.person.musicspider.service.SongService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SongServiceImpl implements SongService {
 
 	@Autowired
 	private SongMapper songMapper;
+
 	@Override
+	@Transactional
 	public void updateSong(SongVo song) {
 		song.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 		Example example = new Example(SongVo.class);

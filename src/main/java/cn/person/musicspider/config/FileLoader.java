@@ -21,7 +21,7 @@ public class FileLoader {
 			String rel = sp[1];
 			URL resource = FileLoader.class.getClassLoader().getResource(rel);
 			try {
-			//	ResourceBundle bundle = ResourceBundle.getBundle("env/local");
+			//	ResourceBundle bundle = ResourceBundle.getBundle("prod/local");
 				if(resource==null){
 					return null;
 				}

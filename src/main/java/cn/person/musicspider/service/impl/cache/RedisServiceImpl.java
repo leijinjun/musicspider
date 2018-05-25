@@ -67,11 +67,11 @@ public class RedisServiceImpl implements RedisService{
 	}
 
 	@Override
-	public String rpop(String key) {
+	public String lpop(String key) {
 		Jedis jedis = null;
 			try {
 				jedis = jedisPool.getResource();
-				String value = jedis.rpop(key);
+				String value = jedis.lpop(key);
 				return value;
 			} catch (Exception e) {
 				e.printStackTrace();

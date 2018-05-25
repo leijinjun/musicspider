@@ -28,7 +28,7 @@
 		<!-- 配置资源文件 -->
 		<property name="locations">
 			<list>
-				<value>classpath:env/local.properties</value>
+				<value>classpath:dev/local.properties</value>
 			</list>
 		</property>
 	</bean>
