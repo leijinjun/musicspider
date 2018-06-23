@@ -53,7 +53,7 @@ public class SingerResource extends BaseController {
 	public void redisSong(){
 		String key = "spider.song.url.list";
 		List<String> list = redisService.lRange(key,0L,Long.MAX_VALUE);
-		Set<String> commentURLLists = new HashSet<>();
+		/*Set<String> commentURLLists = new HashSet<>();
 		Map<String, Object> map = new HashMap<>();
 		for (String str:
 			 list) {
@@ -62,20 +62,11 @@ public class SingerResource extends BaseController {
 			map.put("musicId",id);
 			commentURLLists.add(JSONObject.toJSONString(map));
 			map.clear();
-		}
-		Set<String> set = new HashSet<>();
-		set.addAll(list);
+		}*/
+		Set<String> set = new HashSet<>(list);
 		System.out.println("set:"+set.size());
-		ArrayList<String> list1 = new ArrayList<>();
-		list1.addAll(set);
 		redisService.remove(key);
-		redisService.rpush(key,list1);
-		List<String> commentList = new ArrayList<>();
-		commentList.addAll(commentURLLists);
-		redisService.remove(CommentController.REDIS_COMMENT_KEY);
-		redisService.rpush(CommentController.REDIS_COMMENT_KEY,commentList);
-		list.clear();
-		set.clear();
+		redisService.sadd(key,set.toArray(new String[0]));
 	}
 
 }

@@ -24,7 +24,6 @@ public class EnumHandler<T extends EnumType> extends BaseTypeHandler<T>{
 		if (type == null) throw new IllegalArgumentException("Type argument cannot be null");
 		this.type = type;
 		this.enums = type.getEnumConstants();
-		LOGGER.info("create object:{}",type.getName());
 		if (this.enums == null) throw new IllegalArgumentException(type.getSimpleName() + " does not represent an enum type.");
 	}
 	@Override
@@ -34,28 +33,28 @@ public class EnumHandler<T extends EnumType> extends BaseTypeHandler<T>{
 
 	@Override
 	public T getNullableResult(ResultSet rs, String columnName) throws SQLException {
-		int code = rs.getInt(columnName);
 		if(rs.wasNull()){
 			return null;
 		}
+		int code = rs.getInt(columnName);
 		return getEnum(code);
 	}
 
 	@Override
 	public T getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-		int code = rs.getInt(columnIndex);
 		if(rs.wasNull()){
 			return null;
 		}
+		int code = rs.getInt(columnIndex);
 		return getEnum(code);
 	}
 
 	@Override
 	public T getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-		int code = cs.getInt(columnIndex);
 		if(cs.wasNull()){
 			return null;
 		}
+		int code = cs.getInt(columnIndex);
 		return getEnum(code);
 	}
 

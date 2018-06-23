@@ -98,7 +98,7 @@ public class SingerController extends BaseController {
 					try {
 						els2 = response.parse().body().select("#initial-selector").select("li");
 						Iterator<Element> iterator2 = els2.iterator();
-						List<String> childUrlList = new LinkedList<>();
+						Set<String> childUrlList = new HashSet<>();
 						while (iterator2.hasNext()) {
 							Element next2 = iterator2.next();
 							Elements a = next2.getElementsByTag("a");
@@ -145,7 +145,7 @@ public class SingerController extends BaseController {
 								Object id = obj.get("singerId");
 								singerurlLists.add("http://music.163.com/artist?id="+id);
 							}
-							redisService.rpush("spider-singer-url-list", new ArrayList<>(singerurlLists));
+							redisService.sadd("spider-singer-url-list", singerurlLists.toArray(new String[0]));
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -170,7 +170,7 @@ public class SingerController extends BaseController {
 	@RequestMapping(value="/hotSongs")
 	@ResponseBody
 	public Response getHotSongs(){
-		String value = redisService.lpop("spider-singer-url-list");
+		String value = redisService.spop("spider-singer-url-list");
 			while(value!=null){
 				LOGGER.info("获取歌曲URL:{}",value);
 				Long singerId = Long.parseLong(value.substring(value.indexOf("=")+1));
@@ -185,7 +185,6 @@ public class SingerController extends BaseController {
 							String text = textarea.get(0).text();
 							JSONArray array = JSONArray.parseArray(text);
 							if (array != null && array.size() > 0) {
-								Set<String> songURLLists = new HashSet<>();
 								Set<String> commentURLLists = new HashSet<>();
 								for (int i = 0; i < array.size(); i++) {
 									JSONObject itemJSON = array.getJSONObject(i);
@@ -199,7 +198,6 @@ public class SingerController extends BaseController {
 									map.put("commentURL", "http://music.163.com/weapi/v1/resource/comments/"
 											+ itemJSON.getString("commentThreadId"));
 									map.put("musicId", song.getSongId());
-									songURLLists.add("http://music.163.com/song?id=" + itemJSON.getLong("id"));
 									commentURLLists.add(JSONObject.toJSONString(map));
 //									String msg = JSONObject.toJSONString(song);
 //									producerService.sendMsg(RoutingKey.SPIDER_SONG_CREATE.getSendKey(), msg);
@@ -211,8 +209,7 @@ public class SingerController extends BaseController {
 										}
 									});
 								}
-								redisService.rpush("spider.song.url.list", new ArrayList<>(songURLLists));
-								redisService.rpush("spider.comment.url.list", new ArrayList<>(commentURLLists));
+								redisService.sadd("spider.comment.url.list", commentURLLists.toArray(new String[0]));
 							}
 						}
 					}
@@ -221,7 +218,7 @@ public class SingerController extends BaseController {
 			}catch (Exception e) {
 				e.printStackTrace();
 			}finally {
-				value = redisService.lpop("spider-singer-url-list");
+				value = redisService.spop("spider-singer-url-list");
 				try {
 					Thread.sleep(3000);
 				}catch (Exception ex){
@@ -256,7 +253,7 @@ public class SingerController extends BaseController {
 					songVo.setSingerId(singerId);
 					songVo.setPicUrl(pic_url);
 					Map<String,Object> map = new HashMap<>();
-					map.put("id",554241075);
+					map.put("id",songId);
 					map.put("lv",-1);
 					Map<String, String> params = EncryptTools.commentAPI(JSONObject.toJSONString(map));
 					Connection.Response lyResponse = Jsoup.connect("http://music.163.com/weapi/song/lyric?csrf_token=").method(Method.POST).data(params).execute();
@@ -297,7 +294,12 @@ public class SingerController extends BaseController {
 					String photoUrl = body.select("div[class='btm']").next("img").attr("src");
 					singer.setPhotoUrl(photoUrl);
 					Connection.Response descRes = Jsoup.connect("http://music.163.com/artist/desc?id=" + singerId).method(Method.GET).execute();
-					String desc = descRes.parse().body().select("div[class='n-artdesc']").select("p").get(0).text();
+					String desc = "";
+					if(descRes.parse().body().select("div[class='n-nmusic']")!=null){
+						desc = "暂无介绍";
+					}else{
+						desc = descRes.parse().body().select("div[class='n-artdesc']").select("p").get(0).text();
+					}
 					singer.setDescipt(desc);
 					singerService.updateSinger(singer);
 					Element home = body.getElementById("artist-home");

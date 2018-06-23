@@ -49,7 +49,7 @@ public class CommentController extends BaseController{
 	@Autowired
 	private UserService userService;
 
-	public static final String REDIS_COMMENT_KEY = "spider.comment.url.list";
+	public  String REDIS_COMMENT_KEY = "spider.comment.url.list";
 
 	/**
 	 * 爬取所有评论
@@ -59,17 +59,21 @@ public class CommentController extends BaseController{
 	@ResponseBody
 	public Response comment(){
 		new Thread(()->{
-			String map = redisService.lpop(REDIS_COMMENT_KEY);
+			String map = redisService.spop(REDIS_COMMENT_KEY);
 			LinkedBlockingDeque<Runnable> blockingDeque = new LinkedBlockingDeque<>();
-			ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 5, Integer.MAX_VALUE, TimeUnit.SECONDS, blockingDeque);
-			try {
-				while(map!=null){
-                    getComments(map);
-                    map = redisService.lpop(REDIS_COMMENT_KEY);
-                }
-			} catch (Exception e) {
-				e.printStackTrace();
+			ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 3, Integer.MAX_VALUE, TimeUnit.SECONDS, blockingDeque);
+			while(map!=null){
+				try {
+					getComments(map);
+				} catch (Exception e) {
+					e.printStackTrace();
+					LOGGER.error(e.getMessage());
+					redisService.sadd(REDIS_COMMENT_KEY,map);
+				} finally {
+					map = redisService.spop(REDIS_COMMENT_KEY);
+				}
 			}
+			LOGGER.info("执行完毕");
 
 		}).start();
 		return Response.OK;
@@ -83,7 +87,7 @@ public class CommentController extends BaseController{
 	 */
 	@RequestMapping(value = "/search")
 	@ResponseBody
-	public Response search(@RequestParam("search") String s,@RequestParam(value = "singerName",required = false)String singerName){
+	public Response search(@RequestParam("es") String s,@RequestParam(value = "singerName",required = false)String singerName){
 		Map<String, Object> map = new HashMap<>();
 		map.put("limit", 8);
 		map.put("s",s);
@@ -92,7 +96,7 @@ public class CommentController extends BaseController{
 		headers.put("Content-type","application/x-www-form-urlencoded");
 		Connection.Response response = null;
 		try {
-			response = Jsoup.connect("http://music.163.com/weapi/search/suggest/web?csrf_token=").method(Method.POST).headers(headers).data(data).execute();
+			response = Jsoup.connect("http://music.163.com/weapi/es/suggest/web?csrf_token=").method(Method.POST).headers(headers).data(data).execute();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -128,6 +132,8 @@ public class CommentController extends BaseController{
 			try {
 				getComments(param.toJSONString());
 			} catch (Exception e) {
+				LOGGER.error(e.getMessage());
+				redisService.sadd(REDIS_COMMENT_KEY,param.toJSONString());
 				e.printStackTrace();
 			}
 		}
@@ -221,12 +227,8 @@ public class CommentController extends BaseController{
 				Thread.sleep(4000);
 			}catch (InterruptedException e){
 				e.printStackTrace();
-			}catch (IOException e){
-				e.printStackTrace();
 			}
-			catch (RuntimeException e) {
-				e.printStackTrace();
-		}
 		}
 	}
+
 }
